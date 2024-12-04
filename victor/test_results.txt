@@ -1,0 +1,29 @@
+test_edge_cases (test_cm.TestRLECompression.test_edge_cases) ... ok
+test_invalid_message_type (test_cm.TestRLECompression.test_invalid_message_type) ... ok
+test_invalid_persons (test_cm.TestRLECompression.test_invalid_persons) ... ok
+test_rle_encode_decode_basic (test_cm.TestRLECompression.test_rle_encode_decode_basic) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.001s
+
+OK
+
+Test string: 
+Encoded message: 
+Decoded message: 
+
+Test string: A
+Encoded message: 1A
+Decoded message: A
+
+Test string: AABBB
+Encoded message: 2A3B
+Decoded message: AABBB
+
+Test string: Hello
+Encoded message: 1H1e2l1o
+Decoded message: Hello
+
+Test string: WWWWWWWWWWWWBWWWWWWWWWWWWBBBWWWWWWWWWWWWWWWWWWWWWWWWB
+Encoded message: 12W1B12W3B24W1B
+Decoded message: WWWWWWWWWWWWBWWWWWWWWWWWWBBBWWWWWWWWWWWWWWWWWWWWWWWWB
