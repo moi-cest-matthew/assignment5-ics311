@@ -1,0 +1,3 @@
+nextworkx
+numpy
+pytest
