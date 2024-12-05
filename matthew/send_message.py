@@ -11,20 +11,20 @@ from structures import (
     CommunicationNetwork
 )
 
+def generate_rsa_keys(key_size=2048):
+     """Generates a new RSA key pair."""   
+     private_key = rsa.generate_private_key(public_exponent=65537, key_size=key_size)
+     public_key = private_key.public_key()
+     return private_key, public_key
+
 """Using English Wikipedia's description of how RSA encryption works,
    simulate the encryption, sending, recieving, and decrypting of
    RSA-encrypted messages."""
 class EncryptedMessenger:
     def __init__(self, network: CommunicationNetwork):
         self.network = network
- 
-    def generate_rsa_keys(key_size=2048):
-        """Generates a new RSA key pair."""   
-        private_key = rsa.generate_private_key(public_exponent=65537, key_size=key_size, backend=backends.default_backend())
-        public_key = private_key.public_key()
-        return private_key, public_key
         
-    def encrypt_message(self, sender: Person, receiver: Person, message: str) -> Message:
+    def encrypt_message(self, sender: Person, receiver: Person, metadata: MessageMetadata, message: str) -> Message:
         """Encrypts a message using RSA and returns an encrypted Message object."""
         public_key = receiver.public_key  # Use the receiver's public key for encryption
         if not public_key:
@@ -40,15 +40,15 @@ class EncryptedMessenger:
         if not receiver.public_key:
             receiver.generate_rsa_keys() 
 
-        ciphertext = rsa.encrypt(
-            message.encode(), public_key, padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None)
+        ciphertext = public_key.encrypt(
+            message.encode(), padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None)
         )
 
         metadata = MessageMetadata(
             message_type=MessageType.ENCRYPTED,
             original_length=len(message), 
         )
-        return Message(sender, receiver, metadata, ciphertext.decode())   
+        return Message(sender, receiver, metadata, ciphertext)   
 
     def decrypt_message(self, sender: Person, message: Message) -> str:  
         """Decrypts an encrypted message using the recipient's private key."""
@@ -59,8 +59,8 @@ class EncryptedMessenger:
         if not private_key:
             raise ValueError("Sender's private key is missing!")
 
-        plaintext = rsa.decrypt(
-            message.body.encode(), private_key, padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None)
+        plaintext = private_key.decrypt(
+            message, padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None)
         ).decode() 
         return plaintext
         
@@ -69,18 +69,27 @@ if __name__ == "__main__":
     network = CommunicationNetwork()
     messenger = EncryptedMessenger(network)
     
-    alice_private_key, alice_public_key = generate_rsa_keys()
-    bob_private_key, bob_public_key = generate_rsa_keys()
+    alice = Person("Alice")
+    bob = Person("Bob")
     
-    network.add_person(Person("Alice", alice_private_key, alice_public_key))
-    network.add_person(Person("Bob", bob_private_key, bob_public_key))   
+    alice_private, alice_public = generate_rsa_keys()
+    bob_private, bob_public = generate_rsa_keys()
+    
+    alice.private_key = alice_private
+    alice.public_key = alice_public
+    bob.private_key = bob_private
+    bob.public_key = bob_public
+    
+    # Add people to network
+    network.add_person(alice)
+    network.add_person(bob)
 
 
-    message = "This is a secret message!"
-    encrypted_message = messenger.encrypt_message(Person(id="Alice"), Person(id="Bob"), message) 
+    metadata = MessageMetadata(MessageType.PLAIN)
+    encrypted_message = messenger.encrypt_message(alice, bob, metadata, "This is a secret message!") 
     print("Encrypted Message:", encrypted_message)  
 
-    decrypted_message = messenger.decrypt_message(Person(id="Bob"), encrypted_message)
+    decrypted_message = messenger.decrypt_message(bob, encrypted_message)
     print("Decrypted Message:", decrypted_message)
     
    
