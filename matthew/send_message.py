@@ -17,18 +17,12 @@ from structures import (
 class EncryptedMessenger:
     def __init__(self, network: CommunicationNetwork):
         self.network = network
-        
-    def generate_rsa_keys(key_size=2048): 
-    """Generates a new RSA key pair."""
-    private_key = rsa.generate_private_key(
-        public_exponent=65537,  # Common public exponent value
-        key_size=key_size, 
-        backend=backends.default_backend()
-    )
-
-    public_key = private_key.public_key()
-
-    return private_key, public_key
+ 
+    def generate_rsa_keys(key_size=2048):
+        """Generates a new RSA key pair."""   
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=key_size, backend=backends.default_backend())
+        public_key = private_key.public_key()
+        return private_key, public_key
         
     def encrypt_message(self, sender: Person, receiver: Person, message: str) -> Message:
         """Encrypts a message using RSA and returns an encrypted Message object."""
@@ -71,11 +65,16 @@ class EncryptedMessenger:
         return plaintext
         
 if __name__ == "__main__":
-    network = CommunicationNetwork()
-    network.add_person(Person(id="Alice", public_key=b"alice_public_key"))  # Replace with actual keys
-    network.add_person(Person(id="Bob", public_key=b"bob_public_key"))   
 
+    network = CommunicationNetwork()
     messenger = EncryptedMessenger(network)
+    
+    alice_private_key, alice_public_key = generate_rsa_keys()
+    bob_private_key, bob_public_key = generate_rsa_keys()
+    
+    network.add_person(Person("Alice", alice_private_key, alice_public_key))
+    network.add_person(Person("Bob", bob_private_key, bob_public_key))   
+
 
     message = "This is a secret message!"
     encrypted_message = messenger.encrypt_message(Person(id="Alice"), Person(id="Bob"), message) 
